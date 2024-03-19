@@ -22,13 +22,23 @@ namespace GameBibApi.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetUser()
         {
-          if (_context.Users == null)
-          {
-              return NotFound();
-          }
-            return await _context.Users.ToListAsync();
+            var users = await _context.Users
+                .ToListAsync();
+
+            var userDtos = new List<UserDto>();
+
+            foreach (var user in users)
+            {
+                userDtos.Add(new UserDto
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                });
+            }
+
+            return userDtos;
         }
 
         // GET: api/Users/5
@@ -83,16 +93,26 @@ namespace GameBibApi.Controllers
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<User>> PostUser(UserLoginDto userLoginDto)
         {
-          if (_context.Users == null)
-          {
-              return Problem("Entity set 'AppDbContext.Users'  is null.");
-          }
+            if (_context.Users == null)
+            {
+                return Problem("Entity set 'AppDbContext.User'  is null.");
+            }
+
+            var user = new User()
+            {
+                Username = userLoginDto.Username,
+                Password = SecureHasher.Hash(userLoginDto.Password),
+            };
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            userLoginDto.Id = user.Id;
+
+            userLoginDto.Password = "";
+            return CreatedAtAction("GetUser", new { id = user.Id }, userLoginDto);
         }
 
         // DELETE: api/Users/5
@@ -115,9 +135,41 @@ namespace GameBibApi.Controllers
             return NoContent();
         }
 
+        // POST: api/Users/Login
+        [HttpPost("Login")]
+        public async Task<ActionResult<User>> PostUserLogin(UserLoginDto userLoginDto)
+        {
+            if (_context.Users == null)
+            {
+                return Problem("Entity set 'AppDbContext.User'  is null.");
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            else if (VerifyPassword(userLoginDto.Password, user.Password))
+            {
+                userLoginDto.Id = user.Id;
+                userLoginDto.Password = "";
+                return CreatedAtAction("PostUserLogin", userLoginDto);
+            }
+
+            return NotFound();
+
+        }
+
         private bool UserExists(int id)
         {
             return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+
+        private bool VerifyPassword(string password, string hashedPassword)
+        {
+            return SecureHasher.Verify(password, hashedPassword);
         }
     }
 }

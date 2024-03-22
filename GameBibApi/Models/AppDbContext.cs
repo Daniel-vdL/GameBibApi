@@ -21,8 +21,8 @@ namespace GameBibApi.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, Username = "Dani", Password = SecureHasher.Hash("1234")},
-                new User { Id = 2, Username = "Justin", Password = SecureHasher.Hash("1234")});
+                new User { Id = 1, Username = "Dani", statusId = 0, Password = SecureHasher.Hash("1234")},
+                new User { Id = 2, Username = "Justin", statusId = 0, Password = SecureHasher.Hash("1234")});
         }
     }
 }

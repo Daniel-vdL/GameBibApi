@@ -62,9 +62,9 @@ namespace GameBibApi.Controllers
         // PUT: api/Users/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, UserDto userDto)
+        public async Task<IActionResult> PutUser(int id, UserLoginDto userLoginDto)
         {
-            if (id != userDto.Id)
+            if (id != userLoginDto.Id)
             {
                 return BadRequest();
             }
@@ -76,11 +76,13 @@ namespace GameBibApi.Controllers
                 return NotFound();
             }
 
-            user.Username = userDto.Username;
+            user.Username = userLoginDto.Username;
+            user.Password = SecureHasher.Hash(userLoginDto.Password);
 
             try
             {
                 await _context.SaveChangesAsync();
+                userLoginDto.Password = "";
             }
             catch (DbUpdateConcurrencyException)
             {

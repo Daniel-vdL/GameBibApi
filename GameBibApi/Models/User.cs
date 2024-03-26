@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GameBib.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,6 +22,8 @@ namespace GameBibApi.Models
         public int Id { get; set; }
         public string Username { get; set; }
         public int? statusId { get; set; }
+
+        public ICollection<WantedGame> WantedGames { get; set; }
     }
     
     public class UserLoginDto
